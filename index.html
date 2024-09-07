@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        #qrcode {
+            margin: 20px 0;
+            border: 1px solid #ccc;
+        }
+        #tips {
+            margin-bottom: 10px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="tips">请点击生成二维码</div>
+    <div id="qrcode"></div>
+    <button id="setOpenIdBtn">修改OpenId</button>
+    <button id="refreshQRCodeBtn">刷新二维码</button>
+
+    <script>
+        let openId = localStorage.getItem('openId') || '';
+        let satoken = localStorage.getItem('satoken') || '';
+        let scaleFactor = parseFloat(localStorage.getItem('scale')) || 1.0;
+        const REQUEST_INTERVAL = 30000; // 30 seconds
+
+        const tipsElement = document.getElementById('tips');
+        const qrcodeElement = document.getElementById('qrcode');
+        const setOpenIdBtn = document.getElementById('setOpenIdBtn');
+        const refreshQRCodeBtn = document.getElementById('refreshQRCodeBtn');
+
+        setOpenIdBtn.addEventListener('click', () => inputOpenId('修改OpenId'));
+        refreshQRCodeBtn.addEventListener('click', refreshQRCode);
+
+        function inputOpenId(msg) {
+            const newOpenId = prompt(msg, openId);
+            if (newOpenId !== null) {
+                openId = newOpenId;
+                localStorage.setItem('openId', openId);
+                satoken = '';
+                localStorage.setItem('satoken', satoken);
+                refreshQRCode();
+            }
+        }
+
+        async function request(path) {
+            const response = await fetch(`https://api.215123.cn${path}`, {
+                method: 'GET',
+                headers: {
+                    'satoken': satoken
+                }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        }
+
+        async function getSatoken() {
+            try {
+                const data = await request(`/web-app/auth/certificateLogin?openId=${openId}`);
+                satoken = data.data.token;
+                if (!satoken) {
+                    throw new Error('satoken为空');
+                }
+                localStorage.setItem('satoken', satoken);
+                return 0;
+            } catch (error) {
+                console.error(error);
+                alert('OpenId无效');
+                inputOpenId('OpenId无效');
+                return -1;
+            }
+        }
+
+        async function refreshQRCode() {
+            clearTimeout(window.refreshTimeout);
+            tipsElement.textContent = '正在更新二维码...';
+            try {
+                const data = await request('/pms/welcome/make-qrcode');
+                const code = data.data;
+                if (!code) {
+                    throw new Error('code为空');
+                }
+                generateQRCode(code);
+                window.refreshTimeout = setTimeout(refreshQRCode, REQUEST_INTERVAL);
+            } catch (error) {
+                console.error(error);
+                const retryTime = await getSatoken();
+                if (retryTime >= 0) {
+                    window.refreshTimeout = setTimeout(refreshQRCode, retryTime);
+                }
+            }
+        }
+
+        function generateQRCode(data) {
+            tipsElement.textContent = '二维码更新成功！';
+            qrcodeElement.innerHTML = '';
+            const qr = qrcode(0, 'L');
+            qr.addData(data);
+            qr.make();
+            qrcodeElement.innerHTML = qr.createImgTag(5, 10);
+            const img = qrcodeElement.querySelector('img');
+            img.style.transform = `scale(${scaleFactor})`;
+        }
+
+        // 添加缩放功能
+        let startDist = 0;
+        qrcodeElement.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                startDist = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+            }
+        });
+
+        qrcodeElement.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                const dist = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+                scaleFactor *= dist / startDist;
+                scaleFactor = Math.max(0.4, Math.min(scaleFactor, 1.0));
+                const img = qrcodeElement.querySelector('img');
+                if (img) {
+                    img.style.transform = `scale(${scaleFactor})`;
+                }
+                startDist = dist;
+            }
+        });
+
+        qrcodeElement.addEventListener('touchend', () => {
+            localStorage.setItem('scale', scaleFactor.toString());
+        });
+
+        // 初始加载
+        refreshQRCode();
+    </script>
+</body>
+</html>
