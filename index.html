@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Generator</title>
+    <link rel="icon" href="./ico.png" type="image/png">
+    <link rel="apple-touch-icon" href="./ico.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="./manifest.json">
+    <meta name="apple-mobile-web-app-title" content="慧湖通极速版">
+    <title>慧湖通极速版</title>
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <style>
         body {
@@ -15,7 +20,11 @@
         }
         #qrcode {
             margin: 20px 0;
-            border: 1px solid #ccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 90vw;
+            height: 60vh;
         }
         #tips {
             margin-bottom: 10px;
@@ -26,6 +35,17 @@
         }
     </style>
 </head>
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register('./service-worker.js').then(function (registration) {
+                console.log('ServiceWorker registration successful with scope:', registration.scope);
+            }).catch(function (err) {
+                console.log('ServiceWorker registration failed:', err);
+            });
+        });
+    }
+</script>
 <body>
     <div id="tips">请点击生成二维码</div>
     <div id="qrcode"></div>
@@ -36,7 +56,7 @@
         let openId = localStorage.getItem('openId') || '';
         let satoken = localStorage.getItem('satoken') || '';
         let scaleFactor = parseFloat(localStorage.getItem('scale')) || 1.0;
-        const REQUEST_INTERVAL = 30000; // 30 seconds
+        const REQUEST_INTERVAL = 8 * 1000;
 
         const tipsElement = document.getElementById('tips');
         const qrcodeElement = document.getElementById('qrcode');
@@ -122,6 +142,7 @@
         let startDist = 0;
         qrcodeElement.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
+                e.preventDefault();
                 startDist = Math.hypot(
                     e.touches[0].pageX - e.touches[1].pageX,
                     e.touches[0].pageY - e.touches[1].pageY
@@ -131,12 +152,21 @@
 
         qrcodeElement.addEventListener('touchmove', (e) => {
             if (e.touches.length === 2) {
+                e.preventDefault();
                 const dist = Math.hypot(
                     e.touches[0].pageX - e.touches[1].pageX,
                     e.touches[0].pageY - e.touches[1].pageY
                 );
                 scaleFactor *= dist / startDist;
-                scaleFactor = Math.max(0.4, Math.min(scaleFactor, 1.0));
+                // 获取图片的原始尺寸
+                const imgWidth = qrcodeElement.querySelector('img').width;
+                const imgHeight = qrcodeElement.querySelector('img').height;
+                // 获取父容器尺寸
+                const parentWidth = qrcodeElement.clientWidth;
+                const parentHeight = qrcodeElement.clientHeight;
+                // 计算最大缩放比例
+                const maxScale = Math.max(parentWidth / imgWidth, parentHeight / imgHeight) * 0.9;
+                scaleFactor = Math.max(0.1, Math.min(scaleFactor, maxScale));
                 const img = qrcodeElement.querySelector('img');
                 if (img) {
                     img.style.transform = `scale(${scaleFactor})`;
@@ -145,7 +175,8 @@
             }
         });
 
-        qrcodeElement.addEventListener('touchend', () => {
+        qrcodeElement.addEventListener('touchend', (e) => {
+            e.preventDefault();
             localStorage.setItem('scale', scaleFactor.toString());
         });
 
