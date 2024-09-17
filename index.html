@@ -35,7 +35,6 @@
             width: 100%;
             justify-content: center;
             align-items: center;
-            /* */
             max-width: 600px;
             padding: 30px;
         }
@@ -62,9 +61,66 @@
             justify-content: center;
         }
         #refreshQRCodeBtn::before {
-            content: "\21BB"; /* Unicode character for refresh icon */
+            content: "\21BB";
             margin-right: 5px;
             font-size: 18px;
+        }
+        #message-box {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+        }
+        #input-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+        }
+        .dialog-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: calc(100vw - 20px);
+            max-width: 600px;
+        }
+        #input-dialog input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 999px;
+        }
+        #input-dialog button {
+            margin-right: 10px;
+        }
+        #btn-area-msgbox {
+            display: flex;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+            padding: 0px;
+            gap: 5px;
+        }
+        #btn-area-msgbox > button {
+            width: 100%;
         }
     </style>
 </head>
@@ -80,6 +136,17 @@
     }
 </script>
 <body>
+    <div id="message-box"></div>
+    <div id="input-dialog">
+        <div class="dialog-content">
+            <p id="dialog-message"></p>
+            <input type="text" id="dialog-input">
+            <div id="btn-area-msgbox">
+                <button id="dialog-confirm">确认</button>
+                <button id="dialog-cancel">取消</button>
+            </div>
+        </div>
+    </div>
     <div id="tips">请点击生成二维码</div>
     <div id="qrcode"></div>
     <div id="btn-area">
@@ -97,12 +164,55 @@
         const qrcodeElement = document.getElementById('qrcode');
         const setOpenIdBtn = document.getElementById('setOpenIdBtn');
         const refreshQRCodeBtn = document.getElementById('refreshQRCodeBtn');
+        const messageBox = document.getElementById('message-box');
+        const inputDialog = document.getElementById('input-dialog');
+        const dialogMessage = document.getElementById('dialog-message');
+        const dialogInput = document.getElementById('dialog-input');
+        const dialogConfirm = document.getElementById('dialog-confirm');
+        const dialogCancel = document.getElementById('dialog-cancel');
 
         setOpenIdBtn.addEventListener('click', () => inputOpenId('修改OpenId'));
         refreshQRCodeBtn.addEventListener('click', refreshQRCode);
 
+        function showMessage(message, duration = 3000) {
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, duration);
+        }
+
         function inputOpenId(msg) {
-            const newOpenId = prompt(msg, openId);
+            return new Promise((resolve) => {
+                dialogMessage.textContent = msg;
+                dialogInput.value = openId;
+                inputDialog.style.display = 'block';
+
+                function handleConfirm() {
+                    const newOpenId = dialogInput.value;
+                    inputDialog.style.display = 'none';
+                    resolve(newOpenId);
+                    cleanup();
+                }
+
+                function handleCancel() {
+                    inputDialog.style.display = 'none';
+                    resolve(null);
+                    cleanup();
+                }
+
+                function cleanup() {
+                    dialogConfirm.removeEventListener('click', handleConfirm);
+                    dialogCancel.removeEventListener('click', handleCancel);
+                }
+
+                dialogConfirm.addEventListener('click', handleConfirm);
+                dialogCancel.addEventListener('click', handleCancel);
+            });
+        }
+
+        async function handleSetOpenId() {
+            const newOpenId = await inputOpenId('修改OpenId');
             if (newOpenId !== null) {
                 openId = newOpenId;
                 localStorage.setItem('openId', openId);
@@ -136,8 +246,8 @@
                 return 0;
             } catch (error) {
                 console.error(error);
-                alert('OpenId无效');
-                inputOpenId('请填写OpenId');
+                showMessage('OpenId无效');
+                await handleSetOpenId();
                 return -1;
             }
         }
@@ -193,13 +303,10 @@
                     e.touches[0].pageY - e.touches[1].pageY
                 );
                 scaleFactor *= dist / startDist;
-                // 获取图片的原始尺寸
                 const imgWidth = qrcodeElement.querySelector('img').width;
                 const imgHeight = qrcodeElement.querySelector('img').height;
-                // 获取父容器尺寸
                 const parentWidth = qrcodeElement.clientWidth;
                 const parentHeight = qrcodeElement.clientHeight;
-                // 计算最大缩放比例
                 const maxScale = Math.max(parentWidth / imgWidth, parentHeight / imgHeight) * 0.9;
                 scaleFactor = Math.max(0.1, Math.min(scaleFactor, maxScale));
                 const img = qrcodeElement.querySelector('img');
