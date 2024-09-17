@@ -29,9 +29,42 @@
         #tips {
             margin-bottom: 10px;
         }
+        #btn-area {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+            /* */
+            max-width: 600px;
+            padding: 30px;
+        }
         button {
             margin: 5px;
-            padding: 10px;
+            padding: 10px 15px;
+            background-color: #ececec;
+            color: #000;
+            border: 1px solid #969696;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #d9d9d9;
+        }
+        #btn-area > button {
+            width: 100%;
+        }
+        #refreshQRCodeBtn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #refreshQRCodeBtn::before {
+            content: "\21BB"; /* Unicode character for refresh icon */
+            margin-right: 5px;
+            font-size: 18px;
         }
     </style>
 </head>
@@ -49,8 +82,10 @@
 <body>
     <div id="tips">请点击生成二维码</div>
     <div id="qrcode"></div>
-    <button id="setOpenIdBtn">修改OpenId</button>
-    <button id="refreshQRCodeBtn">刷新二维码</button>
+    <div id="btn-area">
+        <button id="setOpenIdBtn">修改OpenId</button>
+        <button id="refreshQRCodeBtn">刷新二维码</button>
+    </div>
 
     <script>
         let openId = localStorage.getItem('openId') || '';
@@ -102,7 +137,7 @@
             } catch (error) {
                 console.error(error);
                 alert('OpenId无效');
-                inputOpenId('OpenId无效');
+                inputOpenId('请填写OpenId');
                 return -1;
             }
         }
