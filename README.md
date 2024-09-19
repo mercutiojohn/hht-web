@@ -2,7 +2,7 @@
 - Enter your openID to use.
 - Can be self-deployed to hosting service platforms like Vercel.
 
-# 慧湖通 Web 版
+# 慧湖通 PWA 版
 ## OpenId 获取教程
 参照 https://github.com/PairZhu/HuiHuTong/blob/main/README.md
 
