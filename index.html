@@ -17,8 +17,21 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
+            padding: 0;
+            margin: 0;
             min-height: 100vh;
+        }
+
+        #header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 20px;
+            background: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
         #qrcode {
@@ -32,13 +45,15 @@
         }
 
         #tips {
-            margin-bottom: 10px;
+            margin: 10px 0;
+            color: #ccc;
         }
 
         #btn-area {
             display: flex;
             flex-direction: column;
             width: 100%;
+            box-sizing: border-box;
             justify-content: center;
             align-items: center;
             max-width: 600px;
@@ -144,6 +159,11 @@
             width: 100%;
         }
 
+        #setOpenIdBtn {
+            border: none;
+            background: none;
+        }
+
         /* 当输入框的字体小于 16px 时，iOS 会自动放大页面以方便用户输入 */
         input,
         textarea {
@@ -180,11 +200,16 @@
             </div>
         </div>
     </div>
-    <div id="tips">请点击生成二维码</div>
+    <div id="header">
+        <div id="header-btn l"></div>
+        <div id="header-title">慧湖通极速版</div>
+        <div id="header-btn r"></div>
+    </div>
     <div id="qrcode"></div>
+    <div id="tips">请点击生成二维码</div>
     <div id="btn-area">
-        <button id="setOpenIdBtn">修改OpenId</button>
         <button id="refreshQRCodeBtn">刷新二维码</button>
+        <button id="setOpenIdBtn">修改OpenId</button>
     </div>
 
     <script>
@@ -306,7 +331,7 @@
         }
 
         function generateQRCode(data) {
-            tipsElement.textContent = '二维码更新成功！';
+            tipsElement.textContent = `刷新时间: ${new Date().toLocaleTimeString()}`;
             qrcodeElement.innerHTML = '';
             const qr = qrcode(0, 'L');
             qr.addData(data);
