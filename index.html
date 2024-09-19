@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="icon" href="./ico.png" type="image/png">
     <link rel="apple-touch-icon" href="./ico.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -142,6 +142,17 @@
 
         #btn-area-msgbox>button {
             width: 100%;
+        }
+
+        /* 当输入框的字体小于 16px 时，iOS 会自动放大页面以方便用户输入 */
+        input,
+        textarea {
+            font-size: 16px;
+        }
+
+        html,
+        body {
+            touch-action: manipulation;
         }
     </style>
 </head>
