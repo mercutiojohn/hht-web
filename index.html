@@ -173,6 +173,9 @@
         html,
         body {
             touch-action: manipulation;
+            /* not working on iOS < 16 */
+            overscroll-behavior-x: none;
+            overflow-x: hidden;
         }
     </style>
 </head>
