@@ -9,3 +9,6 @@
 ## Try it！
 https://hht-web.mercutio.club
 
+## 感谢
+[HuiHuTong](https://github.com/PairZhu/HuiHuTong)
+[@PairZhu](https://github.com/PairZhu)
