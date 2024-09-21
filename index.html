@@ -177,6 +177,36 @@
             overscroll-behavior-x: none;
             overflow-x: hidden;
         }
+        
+        /* -------- */
+        
+        #iosPrompt {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 16px;
+            z-index: 1000;
+        }
+
+        #iosPrompt span {
+            font-weight: bold;
+        }
+
+        #iosPrompt button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
     </style>
 </head>
 <script>
@@ -214,6 +244,41 @@
         <button id="refreshQRCodeBtn">刷新二维码</button>
         <button id="setOpenIdBtn">修改OpenId</button>
     </div>
+    
+    <div id="iosPrompt">
+        To add this app to your home screen, tap <span>Share</span> and then <span>Add to Home Screen</span>.
+        <button id="closePrompt">Got it!</button>
+    </div>
+    
+    <script>
+        // 检测是否为 iOS 移动设备
+        function isIos() {
+            const userAgent = window.navigator.userAgent;
+            return /iPhone/.test(userAgent) && !window.matchMedia("(display-mode: standalone)").matches;
+        }
+
+        // 检测是否通过 Safari 打开
+        function isInStandaloneMode() {
+            return ('standalone' in window.navigator) && window.navigator.standalone;
+        }
+
+        // 显示提示框，除非用户之前点击关闭
+        function showIosPrompt() {
+            if (isIos() && !isInStandaloneMode() && !localStorage.getItem('iosPromptClosed')) {
+                document.getElementById('iosPrompt').style.display = 'block';
+            }
+        }
+
+        // 处理用户点击关闭提示
+        document.getElementById('closePrompt').addEventListener('click', function() {
+            document.getElementById('iosPrompt').style.display = 'none';
+            // 标记用户已关闭提示
+            localStorage.setItem('iosPromptClosed', 'true');
+        });
+
+        // 在页面加载时显示提示
+        window.addEventListener('load', showIosPrompt);
+    </script>
 
     <script>
         let openId = localStorage.getItem('openId') || '';
