@@ -177,18 +177,21 @@
             overscroll-behavior-x: none;
             overflow-x: hidden;
         }
-        
+
         /* -------- */
-        
+
         #iosPrompt {
             display: none;
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 10px;
+            background-color: rgb(255 255 255 / 80%);
+            border: 1px solid #e0e0e0;
+            margin: 0 20px 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 40px 0px #00000023;
+            padding: 20px;
             text-align: center;
             font-size: 16px;
             z-index: 1000;
@@ -198,14 +201,15 @@
             font-weight: bold;
         }
 
-        #iosPrompt button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 5px 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
+        .whiter-container>img {
+            filter: brightness(2);
+            backdrop-filter: brightness(1);
+        }
+
+        .video {
+            width: 100%;
+            height: 1px;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -221,7 +225,7 @@
     }
 </script>
 
-<body>
+<body class="whiter-container">
     <div id="message-box"></div>
     <div id="input-dialog">
         <div class="dialog-content">
@@ -238,18 +242,35 @@
         <div id="header-title">慧湖通极速版</div>
         <div id="header-btn r"></div>
     </div>
-    <div id="qrcode"></div>
+    <div id="qrcode" class="whiter-container"></div>
     <div id="tips">请点击生成二维码</div>
     <div id="btn-area">
         <button id="refreshQRCodeBtn">刷新二维码</button>
         <button id="setOpenIdBtn">修改OpenId</button>
     </div>
-    
+
+    <div class="whiter-container">
+        <video width="640" height="200" poster="videos/white.png" preload="auto" autoplay loop muted class="video"
+            title="HDR Video">
+            <!-- 
+        ffmpeg -i white1.mp4 -pix_fmt yuv420p10le -color_primaries 9 -color_trc 16 -colorspace 9 -color_range 1 -profile:v 2 -vcodec libvpx-vp9 white.webm
+      -->
+            <source src="videos/white1.webm" type="video/webm" />
+            <!--
+        x265 --input white.yuv --fps 23.976 --frames 24 --input-depth 10 --input-res 3840x2160 --input-csp 1 --profile main10 --hdr --output white.hevc --master-display="L(10000000,5)" --max-cll=10000,10000 --colorprim=9 --transfer=16 && mp4box -add white.hevc white1.mp4
+      -->
+            <source src="videos/white1.mp4" type="video/mp4" />
+            <!-- https://www.avsforum.com/threads/hdr10-test-patterns-set.2943380/ -->
+            <source src="videos/white2.mp4" type="video/mp4" />
+            Turn on JavaScript to see the video.
+        </video>
+    </div>
+
     <div id="iosPrompt">
-        点击下方正中间的 <span>分享</span> 按钮后点击 <span>添加到主屏幕</span> 即可安装到桌面
+        <p>点击下方正中间的 <span>分享</span> 按钮后点击 <span>添加到主屏幕</span> 即可安装到桌面</p>
         <button id="closePrompt">我知道了</button>
     </div>
-    
+
     <script>
         // 检测是否为 iOS 移动设备
         function isIos() {
@@ -270,7 +291,7 @@
         }
 
         // 处理用户点击关闭提示
-        document.getElementById('closePrompt').addEventListener('click', function() {
+        document.getElementById('closePrompt').addEventListener('click', function () {
             document.getElementById('iosPrompt').style.display = 'none';
             // 标记用户已关闭提示
             localStorage.setItem('iosPromptClosed', 'true');
