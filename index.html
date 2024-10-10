@@ -432,8 +432,9 @@
             } catch (error) {
                 console.error(error);
                 retryCount++;
+                const retryTime = await getSatoken();
 
-                if (retryCount <= MAX_RETRY_COUNT) {
+                if (retryTime >= 0 && retryCount <= MAX_RETRY_COUNT) {
                     const retryDelay = Math.min(BASE_RETRY_DELAY * Math.pow(2, retryCount), 30000); // 指数退避，最大延迟30秒
                     window.refreshTimeout = setTimeout(refreshQRCode, retryDelay);
                 } else {
