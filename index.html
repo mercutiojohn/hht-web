@@ -10,6 +10,7 @@
     <link rel="manifest" href="./manifest.json">
     <meta name="apple-mobile-web-app-title" content="慧湖通极速版">
     <title>慧湖通极速版</title>
+    <!-- QR Code -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <style>
         body {
@@ -73,6 +74,11 @@
             cursor: pointer;
             font-size: 16px;
             transition: background-color 0.3s ease;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
         button:hover {
@@ -83,16 +89,10 @@
             width: 100%;
         }
 
-        #refreshQRCodeBtn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #refreshQRCodeBtn::before {
-            content: "\21BB";
-            margin-right: 5px;
+        .button-icon {
             font-size: 18px;
+            width: 18px;
+            height: 18px;
         }
 
         #message-box {
@@ -162,6 +162,11 @@
         #setOpenIdBtn {
             border: none;
             background: none;
+            color: #969696;
+        }
+
+        #closePrompt {
+            width: 100%;
         }
 
         /* 当输入框的字体小于 16px 时，iOS 会自动放大页面以方便用户输入 */
@@ -178,7 +183,7 @@
             overflow-x: hidden;
         }
 
-        /* -------- */
+        /* iOS Prompt */
 
         #iosPrompt {
             display: none;
@@ -188,12 +193,12 @@
             right: 0;
             background-color: rgb(255 255 255 / 80%);
             border: 1px solid #e0e0e0;
-            margin: 0 20px 10px;
-            border-radius: 10px;
+            margin: 0 20px 20px;
+            border-radius: 20px;
             box-shadow: 0 4px 40px 0px #00000023;
             padding: 20px;
             text-align: center;
-            font-size: 16px;
+            font-size: 18px;
             z-index: 1000;
         }
 
@@ -201,8 +206,17 @@
             font-weight: bold;
         }
 
+        .inline-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+            padding: 0 3px;
+        }
+
+        /* HDR Highlight Trick */
+
         .whiter-container>img {
-            filter: brightness(2);
+            filter: brightness(10);
             backdrop-filter: brightness(1);
         }
 
@@ -245,20 +259,24 @@
     <div id="qrcode" class="whiter-container"></div>
     <div id="tips">请点击生成二维码</div>
     <div id="btn-area">
-        <button id="refreshQRCodeBtn">刷新二维码</button>
+        <button id="refreshQRCodeBtn">
+            <i data-lucide="rotate-cw" class="button-icon"></i>
+            刷新二维码
+        </button>
         <button id="setOpenIdBtn">修改OpenId</button>
     </div>
 
+    <!-- HDR Highlight Trick -->
     <div class="whiter-container">
         <video width="640" height="200" poster="videos/white.png" preload="auto" autoplay loop muted class="video"
             title="HDR Video">
             <!-- 
-        ffmpeg -i white1.mp4 -pix_fmt yuv420p10le -color_primaries 9 -color_trc 16 -colorspace 9 -color_range 1 -profile:v 2 -vcodec libvpx-vp9 white.webm
-      -->
+                ffmpeg -i white1.mp4 -pix_fmt yuv420p10le -color_primaries 9 -color_trc 16 -colorspace 9 -color_range 1 -profile:v 2 -vcodec libvpx-vp9 white.webm
+            -->
             <source src="videos/white1.webm" type="video/webm" />
             <!--
-        x265 --input white.yuv --fps 23.976 --frames 24 --input-depth 10 --input-res 3840x2160 --input-csp 1 --profile main10 --hdr --output white.hevc --master-display="L(10000000,5)" --max-cll=10000,10000 --colorprim=9 --transfer=16 && mp4box -add white.hevc white1.mp4
-      -->
+                x265 --input white.yuv --fps 23.976 --frames 24 --input-depth 10 --input-res 3840x2160 --input-csp 1 --profile main10 --hdr --output white.hevc --master-display="L(10000000,5)" --max-cll=10000,10000 --colorprim=9 --transfer=16 && mp4box -add white.hevc white1.mp4
+            -->
             <source src="videos/white1.mp4" type="video/mp4" />
             <!-- https://www.avsforum.com/threads/hdr10-test-patterns-set.2943380/ -->
             <source src="videos/white2.mp4" type="video/mp4" />
@@ -266,13 +284,14 @@
         </video>
     </div>
 
+    <!-- iOS Add-To-Home-Screen Prompt -->
     <div id="iosPrompt">
-        <p>点击下方正中间的 <span>分享</span> 按钮后点击 <span>添加到主屏幕</span> 即可安装到桌面</p>
+        <p>点击下方正中间的 <i data-lucide="share" class="inline-icon">分享</i> 按钮后点击 <span><i data-lucide="square-plus"
+                    class="inline-icon"></i>添加到主屏幕</span> 即可安装到桌面</p>
         <button id="closePrompt">我知道了</button>
     </div>
 
     <script>
-        // 检测是否为 iOS 移动设备
         function isIos() {
             const userAgent = window.navigator.userAgent;
             return /iPhone/.test(userAgent) && !window.matchMedia("(display-mode: standalone)").matches;
@@ -283,21 +302,17 @@
             return ('standalone' in window.navigator) && window.navigator.standalone;
         }
 
-        // 显示提示框，除非用户之前点击关闭
         function showIosPrompt() {
             if (isIos() && !isInStandaloneMode() && !localStorage.getItem('iosPromptClosed')) {
                 document.getElementById('iosPrompt').style.display = 'block';
             }
         }
 
-        // 处理用户点击关闭提示
         document.getElementById('closePrompt').addEventListener('click', function () {
             document.getElementById('iosPrompt').style.display = 'none';
-            // 标记用户已关闭提示
             localStorage.setItem('iosPromptClosed', 'true');
         });
 
-        // 在页面加载时显示提示
         window.addEventListener('load', showIosPrompt);
     </script>
 
@@ -306,6 +321,9 @@
         let satoken = localStorage.getItem('satoken') || '';
         let scaleFactor = parseFloat(localStorage.getItem('scale')) || 1.0;
         const REQUEST_INTERVAL = 8 * 1000;
+        let retryCount = 0;
+        const MAX_RETRY_COUNT = 5;
+        const BASE_RETRY_DELAY = 2000;
 
         const tipsElement = document.getElementById('tips');
         const qrcodeElement = document.getElementById('qrcode');
@@ -409,12 +427,17 @@
                     throw new Error('code为空');
                 }
                 generateQRCode(code);
+                retryCount = 0;
                 window.refreshTimeout = setTimeout(refreshQRCode, REQUEST_INTERVAL);
             } catch (error) {
                 console.error(error);
-                const retryTime = await getSatoken();
-                if (retryTime >= 0) {
-                    window.refreshTimeout = setTimeout(refreshQRCode, retryTime);
+                retryCount++;
+
+                if (retryCount <= MAX_RETRY_COUNT) {
+                    const retryDelay = Math.min(BASE_RETRY_DELAY * Math.pow(2, retryCount), 30000); // 指数退避，最大延迟30秒
+                    window.refreshTimeout = setTimeout(refreshQRCode, retryDelay);
+                } else {
+                    console.error('maximum retry count reached');
                 }
             }
         }
@@ -430,9 +453,13 @@
             img.style.transform = `scale(${scaleFactor})`;
         }
 
-        // 初始加载
         refreshQRCode();
     </script>
 </body>
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+    lucide.createIcons();
+</script>
 
 </html>
